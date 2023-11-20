@@ -2543,6 +2543,18 @@ var updateLogs = function(){
           offline();
           $('body').data('update', setTimeout(function() { updateLogs(); }, 1000));
         }
+        // proactively disconnect websocket when the page is not being viewed
+        $(document).off("visibilitychange.socket").on("visibilitychange.socket", function() {
+          if(document.hidden) socket.close();
+          else updateLogs();
+        });
+        // proactively disconnect when network is disconnected
+        $(window).off("offline.socket").on("offline.socket", function() {
+          socket.close();
+        });
+        $(window).off("online.socket").on("online.socket", function() {
+          if(!document.hidden) updateLogs();
+        });
       } catch(exception){
         console.log('Error: '+exception);
         offline();
