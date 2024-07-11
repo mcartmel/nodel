@@ -105,7 +105,7 @@
                     <ul class="dropdown-menu">
                       <xsl:for-each select="page">
                         <li>
-                          <a role="button" data-nav="{translate(@title,translate(@title,$allowedSymbols,''),'')}" data-toggle="collapse" data-target="#nodel-navbar.in">
+                          <a role="button" data-nav="{translate(@title,translate(@title,$allowedSymbols,''),'')}" data-toggle="dropdown" data-target="#nodel-navbar .dropdown.open">
                             <xsl:if test="@action">
                               <xsl:attribute name="data-action">
                                 <xsl:value-of select="@action"/>
@@ -120,7 +120,7 @@
                   </xsl:if>
                     <xsl:if test="self::page">
                     <li>
-                      <a role="button" data-nav="{translate(@title,translate(@title,$allowedSymbols,''),'')}" data-toggle="collapse" data-target="#nodel-navbar.in">
+                      <a role="button" data-nav="{translate(@title,translate(@title,$allowedSymbols,''),'')}">
                         <xsl:if test="@action">
                           <xsl:attribute name="data-action">
                             <xsl:value-of select="@action"/>

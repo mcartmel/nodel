@@ -1274,7 +1274,6 @@ var setEvents = function(){
     $("[data-section="+id+"]").show();
     history.replaceState(undefined, undefined, '#'+id);
     $("[data-section="+id+"]").find('.nodel-console').scrollTop(999999);
-    return false;
   });
   $('body').on('click', '#confirmkeypad *[data-keypad]', function () {
     var number = $(this).data('keypad');
