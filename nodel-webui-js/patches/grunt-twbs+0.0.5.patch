@@ -1,0 +1,15 @@
+diff --git a/node_modules/grunt-twbs/tasks/twbs.js b/node_modules/grunt-twbs/tasks/twbs.js
+index 7cd9686..96ab0e7 100644
+--- a/node_modules/grunt-twbs/tasks/twbs.js
++++ b/node_modules/grunt-twbs/tasks/twbs.js
+@@ -94,8 +94,8 @@ module.exports = function(grunt) {
+       grunt.log.writeln('Installing Bootstrap required modules');
+       grunt.util.spawn(
+         {
+-          cmd: 'npm',
+-          args: ['install'],
++          cmd: process.platform === 'win32' ? (process.env.ComSpec || 'cmd.exe') : 'npm',
++          args: process.platform === 'win32' ? ['/d', '/s', '/c', 'npm install'] : ['install'],
+           opts: {
+             cwd: path.resolve(options.bootstrap)
+           }
