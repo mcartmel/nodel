@@ -110,6 +110,34 @@ module.exports = function(grunt) {
             dest: 'build/grunt/index.htm'
           },
           {
+            src: 'src/locals.htm',
+            dest: 'build/grunt/locals.htm'
+          },
+          {
+            src: 'src/nodes.htm',
+            dest: 'build/grunt/nodes.htm'
+          },
+          {
+            src: 'src/nodel.htm',
+            dest: 'build/grunt/nodel.htm'
+          },
+          {
+            src: 'src/toolkit.htm',
+            dest: 'build/grunt/toolkit.htm'
+          },
+          {
+            src: 'src/diagnostics.htm',
+            dest: 'build/grunt/diagnostics.htm'
+          },
+          {
+            src: 'src/status.htm',
+            dest: 'build/grunt/status.htm'
+          },
+          {
+            src: 'src/legacy-loader.js',
+            dest: 'build/grunt/legacy-loader.js'
+          },
+          {
             src: 'src/index.smil',
             dest: 'build/grunt/index-sample.smil'
           },
@@ -165,7 +193,7 @@ module.exports = function(grunt) {
             expand: true,
             cwd: 'build/grunt/',
             src: '**',
-            dest: '/Local/Nodel/custom/content/'
+            dest: '/opt/nodel/custom/content/'
           }
         ]
       }
