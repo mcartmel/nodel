@@ -1,6 +1,7 @@
 package org.nodel;
 
 import com.microsoft.playwright.*;
+import com.microsoft.playwright.options.WaitForSelectorState;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.Assumptions;
 import static org.junit.jupiter.api.Assertions.*;
@@ -227,7 +228,7 @@ public abstract class TestBase {
      * Wait for an element to appear with custom timeout
      */
     protected static void waitForElement(String selector, int timeoutMs) {
-        page.waitForSelector(selector, new Page.WaitForSelectorOptions().setTimeout(timeoutMs));
+        page.waitForSelector(selector, new Page.WaitForSelectorOptions().setTimeout(timeoutMs).setState(WaitForSelectorState.ATTACHED));
     }
 
     /**

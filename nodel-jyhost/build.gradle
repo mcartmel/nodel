@@ -261,7 +261,7 @@ test {
 task integrationTest(type: Test) {
     dependsOn 'startNodelhost'
     useJUnitPlatform {
-        excludeTags 'e2e'
+        excludeTags 'e2e', 'legacy-ui'
     }
     testLogging {
         events 'passed', 'skipped', 'failed'
@@ -282,3 +282,46 @@ task e2eTest(type: Test) {
     }
     finalizedBy 'stopNodelhost'
 }
+
+task legacyUiParityTest(type: Test) {
+    dependsOn 'startNodelhost'
+    useJUnitPlatform {
+        includeTags 'legacy-ui-parity'
+    }
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = true
+    }
+    finalizedBy 'stopNodelhost'
+}
+
+task legacyUiFunctionalTest(type: Test) {
+    dependsOn 'startNodelhost'
+    useJUnitPlatform {
+        includeTags 'legacy-ui-functional'
+    }
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = true
+    }
+    finalizedBy 'stopNodelhost'
+}
+
+task legacyUiScreenshotTest(type: Test) {
+    dependsOn 'startNodelhost'
+    useJUnitPlatform {
+        includeTags 'legacy-ui-screenshot'
+    }
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+        showStandardStreams = true
+    }
+    finalizedBy 'stopNodelhost'
+}
+
+task legacyUiTest {
+    dependsOn 'legacyUiParityTest', 'legacyUiFunctionalTest', 'legacyUiScreenshotTest'
+}
+
+legacyUiFunctionalTest.mustRunAfter legacyUiParityTest
+legacyUiScreenshotTest.mustRunAfter legacyUiFunctionalTest

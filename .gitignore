@@ -4,12 +4,14 @@
 /nodel-jyhost/build
 /nodel-framework/build
 /nodel-webui-js/build
+/build
 /.gradle
 /nodel-framework/bin
 /nodel-jyhost/bin
 /nodel-jyhost/content
 /nodel-jyhost/logs
 /nodel-jyhost/nodes
+/nodel-jyhost/nodelhost-temp
 /nodel-framework/.classpath
 /nodel-jyhost/.classpath
 /nodel-jyhost/.project
@@ -44,3 +46,4 @@ out/
 # Visual Studio Code
 .vscode/
 *.code-workspace
+**/.kilo
