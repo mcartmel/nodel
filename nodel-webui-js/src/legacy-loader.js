@@ -140,6 +140,9 @@
       if (hasAttribute(node, 'showvalue')) {
         appendAttribute(parts, 'data-showarg', attr(node, 'showvalue', ''));
       }
+      if (hasAttribute(node, 'showeventarg')) {
+        appendAttribute(parts, 'data-showeventarg', attr(node, 'showeventarg', ''));
+      }
     }
   }
 
@@ -183,25 +186,6 @@
     if (hasAttribute(node, 'confirmtext')) {
       appendAttribute(parts, 'data-confirmtext', attr(node, 'confirmtext', ''));
     }
-  }
-
-  function rewriteCoreHref(href) {
-    if (!href) {
-      return href;
-    }
-    return href
-      .replace(/^\/toolkit\.xml$/, '/toolkit.htm')
-      .replace(/^toolkit\.xml$/, 'toolkit.htm')
-      .replace(/^\/diagnostics\.xml$/, '/diagnostics.htm')
-      .replace(/^diagnostics\.xml$/, 'diagnostics.htm')
-      .replace(/^\/nodes\.xml$/, '/nodes.htm')
-      .replace(/^nodes\.xml$/, 'nodes.htm')
-      .replace(/^\/locals\.xml$/, '/locals.htm')
-      .replace(/^locals\.xml$/, 'locals.htm')
-      .replace(/^\/nodel\.xml$/, '/nodel.htm')
-      .replace(/^nodel\.xml$/, 'nodel.htm')
-      .replace(/^\/status\.xml$/, '/status.htm')
-      .replace(/^status\.xml$/, 'status.htm');
   }
 
   function renderChildren(node, filter) {
@@ -274,6 +258,9 @@
       appendAttribute(parts, 'data-showevent', hasAttribute(node, 'event') ? attr(node, 'event', '') : attr(node, 'showevent', ''));
       if (hasAttribute(node, 'value') || hasAttribute(node, 'showvalue')) {
         appendAttribute(parts, 'data-showarg', hasAttribute(node, 'value') ? attr(node, 'value', '') : attr(node, 'showvalue', ''));
+      }
+      if (hasAttribute(node, 'showeventarg')) {
+        appendAttribute(parts, 'data-showeventarg', attr(node, 'showeventarg', ''));
       }
     }
     parts.push('>');
@@ -367,6 +354,9 @@
       var size = hasAttribute(node, 'size') ? ' fa-' + attr(node, 'size', '') + 'x' : '';
       return '<span class="' + escapeAttribute(style + ' fa-' + attr(node, 'type', '') + size) + '"></span>';
     }
+    if (hasAttribute(node, 'lib')) {
+      return '';
+    }
     return '<span class="glyphicon glyphicon-' + escapeAttribute(attr(node, 'type', '')) + '"></span>';
   }
 
@@ -375,6 +365,7 @@
     if (hasAttribute(node, 'showevent')) {
       appendAttribute(parts, 'data-showevent', attr(node, 'showevent', ''));
       if (hasAttribute(node, 'showvalue')) appendAttribute(parts, 'data-showarg', attr(node, 'showvalue', ''));
+      if (hasAttribute(node, 'showeventarg')) appendAttribute(parts, 'data-showeventarg', attr(node, 'showeventarg', ''));
     }
     var cls = (hasAttribute(node, 'showevent') ? 'sect ' : '') + 'img-responsive';
     appendAttribute(parts, 'class', cls.trim());
@@ -397,11 +388,11 @@
       var rowClass = '';
       if (hasAttribute(row, 'class')) rowClass += ' ' + attr(row, 'class', '');
       if (hasAttribute(row, 'showevent')) rowClass += ' sect';
-      parts.push('<tr');
-      if (rowClass.trim()) appendAttribute(parts, 'class', rowClass.trim());
+      parts.push('<tr class="' + escapeAttribute(rowClass) + '"');
       if (hasAttribute(row, 'showevent')) {
         appendAttribute(parts, 'data-showevent', attr(row, 'showevent', ''));
         if (hasAttribute(row, 'showvalue')) appendAttribute(parts, 'data-showarg', attr(row, 'showvalue', ''));
+        if (hasAttribute(row, 'showeventarg')) appendAttribute(parts, 'data-showeventarg', attr(row, 'showeventarg', ''));
       }
       parts.push('>');
       var cells = childElementsByTag(row, 'cell');
@@ -446,15 +437,17 @@
     var pills = childElementsByTag(node, 'pill');
     for (var i = 0; i < pills.length; i++) {
       var pill = pills[i];
-      var liClass = '';
       var hasChild = childElementsByTag(pill, 'badge').length || childElementsByTag(pill, 'partialbadge').length || childElementsByTag(pill, 'signal').length;
-      if (hasChild) liClass += 'haschild';
-      if (hasAttribute(pill, 'showevent')) liClass += (liClass ? ' ' : '') + 'sect';
       parts.push('<li');
-      if (liClass) appendAttribute(parts, 'class', liClass);
+      if (hasAttribute(pill, 'showevent')) {
+        appendAttribute(parts, 'class', 'sect');
+      } else if (hasChild) {
+        appendAttribute(parts, 'class', 'haschild');
+      }
       if (hasAttribute(pill, 'showevent')) {
         appendAttribute(parts, 'data-showevent', attr(pill, 'showevent', ''));
         if (hasAttribute(pill, 'showvalue')) appendAttribute(parts, 'data-showarg', attr(pill, 'showvalue', ''));
+        if (hasAttribute(pill, 'showeventarg')) appendAttribute(parts, 'data-showeventarg', attr(pill, 'showeventarg', ''));
       }
       parts.push('><a href="#" data-arg="' + escapeAttribute(attr(pill, 'value', '')) + '">' + escapeHtml(directText(pill)) + renderSelectedChildren(pill, ['badge', 'partialbadge', 'signal']) + '</a></li>');
     }
@@ -479,6 +472,7 @@
         appendAttribute(parts, 'class', 'sect');
         appendAttribute(parts, 'data-showevent', attr(item, 'showevent', ''));
         if (hasAttribute(item, 'showvalue')) appendAttribute(parts, 'data-showarg', attr(item, 'showvalue', ''));
+        if (hasAttribute(item, 'showeventarg')) appendAttribute(parts, 'data-showeventarg', attr(item, 'showeventarg', ''));
       }
       parts.push('><a href="#" data-arg="' + escapeAttribute(attr(item, 'value', '')) + '">' + escapeHtml(directText(item)) + '</a></li>');
     }
@@ -502,16 +496,14 @@
     addConfirmAttributes(parts, node);
     appendAttribute(parts, 'class', 'btn-group-vertical dynamic btn-block button-group' + (hasAttribute(node, 'showevent') ? ' sect' : ''));
     if (hasAttribute(node, 'showevent')) appendAttribute(parts, 'data-showevent', attr(node, 'showevent', ''));
+    if (hasAttribute(node, 'showeventarg')) appendAttribute(parts, 'data-showeventarg', attr(node, 'showeventarg', ''));
     parts.push('></div>');
     return parts.join('');
   }
 
   function renderStatusSleep(node) {
     var parts = ['<div class="panel-footer clearfix sect"'];
-    if (hasAttribute(node, 'showevent')) {
-      appendAttribute(parts, 'data-showevent', attr(node, 'showevent', ''));
-      if (hasAttribute(node, 'showvalue')) appendAttribute(parts, 'data-showarg', attr(node, 'showvalue', ''));
-    }
+    addShowEventAttributes(parts, node);
     parts.push('><a href="#" data-action="' + escapeAttribute(attr(node, 'action', '')) + '" class="btn btn-danger" type="button">Sleep</a></div>');
     return parts.join('');
   }
@@ -522,6 +514,7 @@
     if (hasAttribute(node, 'page')) appendAttribute(parts, 'data-nav', sanitizeNav(attr(node, 'page', '')));
     parts.push('><div class="panel-body">');
     parts.push(renderSelectedChildren(node, ['image']));
+    parts.push(renderSelectedChildren(node, ['icon']));
     parts.push(renderSelectedChildren(node, ['link']));
     parts.push(renderSelectedChildren(node, ['button', 'switch', 'partialswitch']));
     parts.push(renderSelectedChildren(node, ['badge', 'partialbadge', 'signal']));
@@ -576,6 +569,7 @@
       if (hasAttribute(node, 'value') || hasAttribute(node, 'showvalue')) {
         appendAttribute(parts, 'data-showarg', hasAttribute(node, 'value') ? attr(node, 'value', '') : attr(node, 'showvalue', ''));
       }
+      if (hasAttribute(node, 'showeventarg')) appendAttribute(parts, 'data-showeventarg', attr(node, 'showeventarg', ''));
     }
     parts.push('><div class="panel panel-default"><div class="panel-body"><div data-event="' + escapeAttribute(attr(node, 'event', '')) + '" class="panel' + escapeAttribute(attr(node, 'height', '')) + 'px scrollbar-inner"></div></div></div>');
     parts.push('<style>.panel' + escapeHtml(attr(node, 'height', '')) + 'px {height: ' + escapeHtml(attr(node, 'height', '')) + 'px; overflow: hidden;}</style>');
@@ -585,13 +579,13 @@
 
   function renderRange(node) {
     var height = hasAttribute(node, 'height') ? attr(node, 'height', '') : '200';
-    var outerClass = hasAttribute(node, 'type') && attr(node, 'type', '') === 'vertical' ? 'range rangeh' + height + 'px' : 'range';
-    if (hasAttribute(node, 'showevent')) outerClass += ' sect';
+    var outerClass = 'range' + (hasAttribute(node, 'showevent') ? ' sect' : '');
     var parts = ['<div class="' + escapeAttribute(outerClass) + '"'];
     addShowEventAttributes(parts, node);
     appendAttribute(parts, 'data-type', attr(node, 'type', ''));
     parts.push('>');
     if (attr(node, 'type', '') === 'vertical') {
+      parts[0] = '<div class="' + escapeAttribute('range rangeh' + height + 'px') + '"';
       parts.push('<style>.rangeh' + escapeHtml(height) + 'px {height: ' + escapeHtml(height) + 'px;}</style>');
     }
     parts.push('<div');
@@ -681,7 +675,19 @@
   }
 
   function renderMeter(node) {
-    return '<div class="meter" data-event="' + escapeAttribute(attr(node, 'event', '')) + '" data-type="' + escapeAttribute(attr(node, 'type', '')) + '" data-range="' + escapeAttribute(hasAttribute(node, 'range') ? attr(node, 'range', '') : 'perc') + '"><div><div data-toggle="tooltip" class="base label-default"></div><div class="bar"><div class="label-danger"></div><div class="label-warning"></div><div class="label-success"></div></div></div><p>0</p></div>';
+    var parts = ['<div'];
+    if (hasAttribute(node, 'showevent')) {
+      appendAttribute(parts, 'class', 'meter sect');
+      appendAttribute(parts, 'data-showevent', attr(node, 'showevent', ''));
+      if (hasAttribute(node, 'showvalue')) appendAttribute(parts, 'data-showarg', attr(node, 'showvalue', ''));
+    } else {
+      appendAttribute(parts, 'class', 'meter');
+    }
+    if (hasAttribute(node, 'event')) appendAttribute(parts, 'data-event', attr(node, 'event', ''));
+    appendAttribute(parts, 'data-type', attr(node, 'type', ''));
+    appendAttribute(parts, 'data-range', hasAttribute(node, 'range') ? attr(node, 'range', '') : 'perc');
+    parts.push('><div><div data-toggle="tooltip" class="base label-default"></div><div class="bar"><div class="label-danger"></div><div class="label-warning"></div><div class="label-success"></div></div></div><p>0</p></div>');
+    return parts.join('');
   }
 
   function renderSignal(node) {
@@ -707,7 +713,7 @@
     }
     if (type === 'add') {
       var gid = generateLegacyId(node);
-      return '<div data-nodel="add" class="nodel-add"><div class="base"><div class="addgrp"><div class="dropdown"><button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="addgrp_' + gid + '">Add node here</button><ul class="dropdown-menu" aria-labelledby="addgrp_' + gid + '"><li><form><fieldset><label for="nodenamval_' + gid + '">Node name</label><input class="form-control nodenamval" type="text" id="nodenamval_' + gid + '"></input><label for="recipeval_' + gid + '">Recipe</label><select class="form-control recipepicker goto" type="text" id="recipeval_' + gid + '"></select></fieldset><div class="btn-toolbar"><button type="submit" class="btn btn-success nodeaddsubmit">Add</button></div></form></li></ul></div></div></div></div>';
+      return '<div data-nodel="add" class="nodel-add"><div class="base"><div class="addgrp"><div class="dropdown"><button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" id="addgrp_' + gid + '">Add node here</button><ul class="dropdown-menu add-node-unified" aria-labelledby="addgrp_' + gid + '"><li><form><fieldset><label for="nodenamval_' + gid + '">Node name</label><input class="form-control nodenamval" type="text" id="nodenamval_' + gid + '"></input><label for="templateval_' + gid + '">Template <small class="text-muted">(optional)</small></label><div style="position:relative"><input class="form-control unified-template-search" type="text" placeholder="Search recipes or nodes..." autocomplete="off" id="templateval_' + gid + '"></input></div></fieldset><div class="btn-toolbar"><button type="submit" class="btn btn-success nodeaddsubmit">Add</button></div></form></li></ul></div></div></div></div>';
     }
     if (type === 'editor') {
       var editorId = generateLegacyId(node);
@@ -778,13 +784,13 @@
   }
 
   function renderPageNav(page) {
-    return '<li><a role="button" data-nav="' + escapeAttribute(sanitizeNav(attr(page, 'title', ''))) + '" data-toggle="collapse" data-target="#nodel-navbar.in"' + (hasAttribute(page, 'action') ? ' data-action="' + escapeAttribute(attr(page, 'action', '')) + '"' : '') + '>' + escapeHtml(attr(page, 'title', '')) + '</a></li>';
+    return '<li><a role="button" data-nav="' + escapeAttribute(sanitizeNav(attr(page, 'title', ''))) + '"' + (hasAttribute(page, 'action') ? ' data-action="' + escapeAttribute(attr(page, 'action', '')) + '"' : '') + '>' + escapeHtml(attr(page, 'title', '')) + '</a></li>';
   }
 
   function renderPageGroup(pageGroup) {
     var pages = childElementsByTag(pageGroup, 'page');
     var items = pages.map(function(page) {
-      return '<li><a role="button" data-nav="' + escapeAttribute(sanitizeNav(attr(page, 'title', ''))) + '" data-toggle="collapse" data-target="#nodel-navbar.in"' + (hasAttribute(page, 'action') ? ' data-action="' + escapeAttribute(attr(page, 'action', '')) + '"' : '') + '>' + escapeHtml(attr(page, 'title', '')) + '</a></li>';
+      return '<li><a role="button" data-nav="' + escapeAttribute(sanitizeNav(attr(page, 'title', ''))) + '" data-toggle="dropdown" data-target="#nodel-navbar .dropdown.open"' + (hasAttribute(page, 'action') ? ' data-action="' + escapeAttribute(attr(page, 'action', '')) + '"' : '') + '>' + escapeHtml(attr(page, 'title', '')) + '</a></li>';
     }).join('');
     return '<li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">' + escapeHtml(attr(pageGroup, 'title', '')) + '<span class="caret"></span></a><ul class="dropdown-menu">' + items + '</ul></li>';
   }
@@ -829,7 +835,7 @@
     navHtml += '<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#nodel-navbar" aria-expanded="false"><span class="sr-only">Toggle navigation</span><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button>';
     navHtml += '<div class="navbar-brand"><a';
     if (header && hasAttribute(header, 'destination')) {
-      navHtml += ' href="' + escapeAttribute(rewriteCoreHref(attr(header, 'destination', ''))) + '"';
+      navHtml += ' href="' + escapeAttribute(attr(header, 'destination', '')) + '"';
     }
     navHtml += '>';
     if (hasAttribute(root, 'logo')) {
@@ -877,7 +883,7 @@
             navHtml += '<ul class="nav navbar-nav edtgrp"><li class="dropdown"><a class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Functions <span class="caret"></span></a><ul class="dropdown-menu"><li class="form"><div><input class="form-control renamenode" type="text"/><button class="btn btn-default renamenodesubmit">Rename</button></div></li><li class="form"><div class="checkbox"><label><input type="checkbox" class="advancedmode"/>Override signals</label></div></li><li class="form"><div><div class="btn-group btn-group-justified"><a class="btn btn-danger deletenodesubmit" role="button">Delete node</a><a class="btn btn-warning restartnodesubmit" role="button">Restart node</a></div></div></li></ul></li></ul>';
           }
           if (type === 'nav') {
-            navHtml += '<ul class="nav navbar-nav srchgrp"><li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Nav <span class="caret"></span></a><ul class="dropdown-menu"><li class="form"><div><input class="form-control node goto" type="text" placeholder="search nodes"/></div></li><li class="form"><div><div class="btn-group btn-group-justified uipicker"><div class="btn-group" role="group"><button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled="disabled">Select UI <span class="caret"></span></button><ul class="dropdown-menu"></ul></div></div></div></li><li role="separator" class="divider"></li><li><a href="/toolkit.htm">Toolkit</a></li><li><a href="/diagnostics.htm">Diagnostics</a></li></ul></li></ul>';
+            navHtml += '<ul class="nav navbar-nav srchgrp"><li class="dropdown"><a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Nav <span class="caret"></span></a><ul class="dropdown-menu"><li class="form"><div><input class="form-control node goto" type="text" placeholder="search nodes"/></div></li><li class="form"><div><div class="btn-group btn-group-justified uipicker"><div class="btn-group" role="group"><button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" disabled="disabled">Select UI <span class="caret"></span></button><ul class="dropdown-menu"></ul></div></div></div></li><li role="separator" class="divider"></li><li><a href="/toolkit.xml">Toolkit</a></li><li><a href="/diagnostics.xml">Diagnostics</a></li></ul></li></ul>';
           }
         }
       }
@@ -962,10 +968,30 @@
           collected.push('<script id="' + escapeAttribute(scripts[i].getAttribute('id')) + '" type="text/x-jsrender">' + scripts[i].textContent + '</' + 'script>');
         }
       }
-      templateCache = collected.join('')
-        .replace(/\/nodes\.xml\?filter=/g, '/nodes.htm?filter=');
+      templateCache = collected.join('');
       return templateCache;
     });
+  }
+
+  function renderXmlNavigationAdapter() {
+    return '<script>(function(){' +
+      'function route(url){' +
+        'if(url.origin!==window.location.origin)return null;' +
+        'if(!/\\.xml$/i.test(url.pathname))return null;' +
+        'var routed=new URL(url.href);' +
+        'routed.pathname=routed.pathname.replace(/\\.xml$/i,".htm");' +
+        'return routed.href;' +
+      '}' +
+      'document.addEventListener("click",function(event){' +
+        'if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;' +
+        'var link=event.target.closest&&event.target.closest("a[href]");' +
+        'if(!link||link.target||link.hasAttribute("download"))return;' +
+        'var routed=route(new URL(link.getAttribute("href"),window.location.href));' +
+        'if(!routed)return;' +
+        'event.preventDefault();' +
+        'window.location.href=routed;' +
+      '},true);' +
+    '})();</' + 'script>';
   }
 
   function buildDocument(xmlDoc, templatesHtml, targetPath) {
@@ -984,7 +1010,6 @@
       '<meta name="apple-mobile-web-app-status-bar-style" content="black"/>' +
       '<meta name="theme-color" content="#000000"/>' +
       '<title></title>' +
-      '<style>body{visibility:hidden;}body.nodel-legacy-ready{visibility:visible;}</style>' +
       '<link rel="stylesheet" href="' + escapeAttribute(themeHref) + '">' +
       optionalCss +
       '<link href="v1/img/favicon.ico" rel="shortcut icon"/>' +
@@ -994,11 +1019,10 @@
       renderSharedChrome() +
       renderPages(root) +
       renderFooter(root) +
-      '<script>window.NODEL_LEGACY_SOURCE = ' + JSON.stringify(targetPath) + ';<' + '/script>' +
       '<script src="v1/js/components.min.js"></' + 'script>' +
       '<script src="v1/js/nodel.js"></' + 'script>' +
       optionalJs +
-      '<script>window.addEventListener("load",function(){document.body.className+=(document.body.className?" ":"")+"nodel-legacy-ready";});<' + '/script>' +
+      renderXmlNavigationAdapter() +
       templatesHtml +
       '</body></html>';
     return html;

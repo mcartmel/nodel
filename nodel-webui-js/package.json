@@ -2,6 +2,9 @@
   "name": "bootskel",
   "version": "0.0.1",
   "description": "Bootstrap skeleton",
+  "scripts": {
+    "compare:markup": "node ./scripts/compare-markup.mjs"
+  },
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.9.0",
     "array.findindex": "^1.0.4",
