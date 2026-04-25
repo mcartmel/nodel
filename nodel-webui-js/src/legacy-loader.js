@@ -13,6 +13,7 @@
   var XML_MIME = 'application/xml';
   var debugEnabled = getQueryParam('legacyDebug') === '1';
   var unknownTags = {};
+  var revealGated = window.NODEL_LEGACY_REVEAL_GATED === true;
 
   function debugLog() {
     if (!debugEnabled || !window.console || !console.log) {
@@ -986,6 +987,8 @@
     var optionalJs = !hasAttribute(root, 'core') && hasAttribute(root, 'js') ? '<script src="' + escapeAttribute(attr(root, 'js', '')) + '"></' + 'script>' : '';
     var bodyClass = getBodyClass(root);
     var bodyClassAttr = bodyClass ? ' class="' + escapeAttribute(bodyClass) + '"' : '';
+    var bodyStyleAttr = revealGated ? ' style="visibility:hidden"' : '';
+    var revealScript = revealGated ? '<script>(function(){var shown=false;function show(){if(shown)return;shown=true;document.body.style.visibility="visible";}if(document.readyState==="complete"){show();return;}window.addEventListener("load",show);setTimeout(show,2000);})();</' + 'script>' : '';
 
     var html = '<!DOCTYPE html SYSTEM "about:legacy-compat"><html lang="en"><head>' +
       '<meta charset="utf-8"/>' +
@@ -999,7 +1002,7 @@
       optionalCss +
       '<link href="v1/img/favicon.ico" rel="shortcut icon"/>' +
       '<link href="v1/img/apple-touch-icon.png" rel="apple-touch-icon"/>' +
-      '</head><body' + bodyClassAttr + '>' +
+      '</head><body' + bodyClassAttr + bodyStyleAttr + '>' +
       renderNavbar(root) +
       renderSharedChrome() +
       renderPages(root) +
@@ -1008,6 +1011,7 @@
       '<script src="v1/js/nodel.js"></' + 'script>' +
       optionalJs +
       templatesHtml +
+      revealScript +
       '</body></html>';
     return html;
   }

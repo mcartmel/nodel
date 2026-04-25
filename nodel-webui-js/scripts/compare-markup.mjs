@@ -298,6 +298,7 @@ async function runLoaderTransform(xmlPath) {
 
   dom.window.fetch = localFetch;
   dom.window.console = { log: function() {}, error: function() {}, warn: function() {}, info: function() {} };
+  dom.window.NODEL_LEGACY_REVEAL_GATED = false;
   dom.window.NODEL_LEGACY_TARGET = path.relative(SRC_DIR, xmlPath).replace(/\\/g, '/');
 
   var originalWrite = dom.window.document.write.bind(dom.window.document);
