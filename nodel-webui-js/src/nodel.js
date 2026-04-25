@@ -605,7 +605,7 @@ $(function() {
   getNodeName().then(function() {
     if(node) {
       if($('body').hasClass('core')) {
-        $('.navbar-brand a').attr("href", window.document.location.protocol+"//"+host+'/nodes.htm').attr('title', 'Browse Nodel network');
+        $('.navbar-brand a').attr("href", window.document.location.protocol+"//"+host+'/nodes.xml').attr('title', 'Browse Nodel network');
         $('.nodel-icon a').attr("href", window.document.location.protocol+"//"+host+'/').attr('title', 'Browse this host');
       }
       getNodeDetails().then(function(){
@@ -2673,10 +2673,7 @@ var fillUIPicker = function() {
       });
       $.each(data, function(i, file){
         if(file['path'].match(/content\/(?!index\.htm|nodes\.xml|index-sample.xml|index-sample\.xml\.htm)\w*\.(xml|html|htm)/g)) {
-          var path = file['path'].replace('content/','');
-          var href = path;
-          if (path.match(/\.xml$/i)) href = 'index.htm?xml=' + encodeURIComponent(path);
-          $(pickerlist).append('<li><a href="'+href+'">'+path+'</a></li>');
+          $(pickerlist).append('<li><a href="'+file['path'].replace('content/','')+'">'+file['path'].replace('content/','')+'</a></li>');
         }
       });
       if($(pickerlist).find('li').length == 0) {

@@ -138,6 +138,10 @@ module.exports = function(grunt) {
             dest: 'build/grunt/legacy-loader.js'
           },
           {
+            src: 'src/legacy-router.js',
+            dest: 'build/grunt/legacy-router.js'
+          },
+          {
             src: 'src/index.smil',
             dest: 'build/grunt/index-sample.smil'
           },

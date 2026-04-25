@@ -4,9 +4,7 @@
   // Legacy wrapper bootstrap.
   // This loader replaces browser-executed XSLT with a client-side reconstruction
   // of the legacy DOM so the existing v1 CSS, JsRender templates, and nodel.js
-  // runtime can keep operating against the same markup contract. Wrapper .htm
-  // routes are used because direct raw .xml first-loads cannot be made reliable
-  // without backend routing changes.
+  // runtime can keep operating against the same markup contract.
 
   var ALLOWED_SYMBOLS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   var wrapperTarget = window.NODEL_LEGACY_TARGET || null;
@@ -214,6 +212,9 @@
       if (hasAttribute(node, 'showvalue')) {
         appendAttribute(attrs, 'data-showarg', attr(node, 'showvalue', ''));
       }
+      if (hasAttribute(node, 'showeventarg')) {
+        appendAttribute(attrs, 'data-showeventarg', attr(node, 'showeventarg', ''));
+      }
     }
     if (hasAttribute(node, 'event')) {
       appendAttribute(attrs, 'data-event', attr(node, 'event', ''));
@@ -238,22 +239,22 @@
   }
 
   function renderColumn(node) {
-    var classes = [];
     var hasResponsive = hasAttribute(node, 'lg') || hasAttribute(node, 'md') || hasAttribute(node, 'sm') || hasAttribute(node, 'xs');
+    var classValue = '';
     if (hasResponsive) {
-      if (hasAttribute(node, 'xs')) classes.push('col-xs-' + attr(node, 'xs', ''));
-      if (hasAttribute(node, 'sm')) classes.push('col-sm-' + attr(node, 'sm', ''));
-      if (hasAttribute(node, 'md')) classes.push('col-md-' + attr(node, 'md', ''));
-      if (hasAttribute(node, 'lg')) classes.push('col-lg-' + attr(node, 'lg', ''));
+      if (hasAttribute(node, 'xs')) classValue += 'col-xs-' + attr(node, 'xs', '') + ' ';
+      if (hasAttribute(node, 'sm')) classValue += 'col-sm-' + attr(node, 'sm', '') + ' ';
+      if (hasAttribute(node, 'md')) classValue += 'col-md-' + attr(node, 'md', '') + ' ';
+      if (hasAttribute(node, 'lg')) classValue += 'col-lg-' + attr(node, 'lg', '');
     } else {
-      classes.push('col-sm-12');
+      classValue = 'col-sm-12';
     }
     if (hasAttribute(node, 'event') || hasAttribute(node, 'showevent')) {
-      classes.push('sect');
+      classValue += ' sect';
     }
-    if (hasAttribute(node, 'push')) classes.push('col-sm-push-' + attr(node, 'push', ''));
-    if (hasAttribute(node, 'pull')) classes.push('col-sm-pull-' + attr(node, 'pull', ''));
-    var parts = ['<div class="' + escapeAttribute(classes.join(' ').trim()) + '"'];
+    if (hasAttribute(node, 'push')) classValue += ' col-sm-push-' + attr(node, 'push', '');
+    if (hasAttribute(node, 'pull')) classValue += ' col-sm-pull-' + attr(node, 'pull', '');
+    var parts = ['<div class="' + escapeAttribute(classValue) + '"'];
     if (hasAttribute(node, 'event') || hasAttribute(node, 'showevent')) {
       appendAttribute(parts, 'data-showevent', hasAttribute(node, 'event') ? attr(node, 'event', '') : attr(node, 'showevent', ''));
       if (hasAttribute(node, 'value') || hasAttribute(node, 'showvalue')) {
@@ -281,18 +282,23 @@
 
   function renderText(node) {
     var parts = ['<p'];
-    if (hasAttribute(node, 'showevent')) {
+    var iconHtml = renderSelectedChildren(node, ['icon']);
+    var hasRenderedIcon = iconHtml.length > 0;
+    if (hasAttribute(node, 'showevent') && !hasRenderedIcon) {
       appendAttribute(parts, 'class', 'sect');
       appendAttribute(parts, 'data-showevent', attr(node, 'showevent', ''));
       if (hasAttribute(node, 'showvalue')) {
         appendAttribute(parts, 'data-showarg', attr(node, 'showvalue', ''));
       }
+      if (hasAttribute(node, 'showeventarg')) {
+        appendAttribute(parts, 'data-showeventarg', attr(node, 'showeventarg', ''));
+      }
     }
-    if (hasAttribute(node, 'event')) {
+    if (hasAttribute(node, 'event') && !hasRenderedIcon) {
       appendAttribute(parts, 'data-event', attr(node, 'event', ''));
     }
     parts.push('>');
-    parts.push(renderSelectedChildren(node, ['icon']));
+    parts.push(iconHtml);
     parts.push(escapeHtml(directText(node)));
     parts.push('</p>');
     return parts.join('');
@@ -582,7 +588,7 @@
     var outerClass = 'range' + (hasAttribute(node, 'showevent') ? ' sect' : '');
     var parts = ['<div class="' + escapeAttribute(outerClass) + '"'];
     addShowEventAttributes(parts, node);
-    appendAttribute(parts, 'data-type', attr(node, 'type', ''));
+    parts.push(' data-type="' + escapeAttribute(attr(node, 'type', '')) + '"');
     parts.push('>');
     if (attr(node, 'type', '') === 'vertical') {
       parts[0] = '<div class="' + escapeAttribute('range rangeh' + height + 'px') + '"';
@@ -684,7 +690,7 @@
       appendAttribute(parts, 'class', 'meter');
     }
     if (hasAttribute(node, 'event')) appendAttribute(parts, 'data-event', attr(node, 'event', ''));
-    appendAttribute(parts, 'data-type', attr(node, 'type', ''));
+    parts.push(' data-type="' + escapeAttribute(attr(node, 'type', '')) + '"');
     appendAttribute(parts, 'data-range', hasAttribute(node, 'range') ? attr(node, 'range', '') : 'perc');
     parts.push('><div><div data-toggle="tooltip" class="base label-default"></div><div class="bar"><div class="label-danger"></div><div class="label-warning"></div><div class="label-success"></div></div></div><p>0</p></div>');
     return parts.join('');
@@ -973,27 +979,6 @@
     });
   }
 
-  function renderXmlNavigationAdapter() {
-    return '<script>(function(){' +
-      'function route(url){' +
-        'if(url.origin!==window.location.origin)return null;' +
-        'if(!/\\.xml$/i.test(url.pathname))return null;' +
-        'var routed=new URL(url.href);' +
-        'routed.pathname=routed.pathname.replace(/\\.xml$/i,".htm");' +
-        'return routed.href;' +
-      '}' +
-      'document.addEventListener("click",function(event){' +
-        'if(event.defaultPrevented||event.button!==0||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;' +
-        'var link=event.target.closest&&event.target.closest("a[href]");' +
-        'if(!link||link.target||link.hasAttribute("download"))return;' +
-        'var routed=route(new URL(link.getAttribute("href"),window.location.href));' +
-        'if(!routed)return;' +
-        'event.preventDefault();' +
-        'window.location.href=routed;' +
-      '},true);' +
-    '})();</' + 'script>';
-  }
-
   function buildDocument(xmlDoc, templatesHtml, targetPath) {
     var root = xmlDoc.documentElement;
     var themeHref = hasAttribute(root, 'theme') ? 'v1/css/components.' + attr(root, 'theme', '') + '.css' : 'v1/css/components.css';
@@ -1002,7 +987,7 @@
     var bodyClass = getBodyClass(root);
     var bodyClassAttr = bodyClass ? ' class="' + escapeAttribute(bodyClass) + '"' : '';
 
-    var html = '<!DOCTYPE html><html lang="en"><head>' +
+    var html = '<!DOCTYPE html SYSTEM "about:legacy-compat"><html lang="en"><head>' +
       '<meta charset="utf-8"/>' +
       '<meta http-equiv="X-UA-Compatible" content="IE=edge"/>' +
       '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>' +
@@ -1022,7 +1007,6 @@
       '<script src="v1/js/components.min.js"></' + 'script>' +
       '<script src="v1/js/nodel.js"></' + 'script>' +
       optionalJs +
-      renderXmlNavigationAdapter() +
       templatesHtml +
       '</body></html>';
     return html;
