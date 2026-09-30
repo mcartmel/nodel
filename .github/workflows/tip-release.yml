@@ -1,0 +1,201 @@
+name: Tip Release
+
+on:
+  workflow_run:
+    workflows: ["Build and Test"]
+    types: [completed]
+    branches: [dev]
+  workflow_dispatch:
+
+concurrency:
+  group: tip-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: >-
+      (github.event_name == 'workflow_run'
+        && github.event.workflow_run.conclusion == 'success'
+        && github.event.workflow_run.event == 'push'
+        && github.event.workflow_run.head_branch == 'dev'
+        && github.event.workflow_run.head_repository.full_name == github.repository)
+      || (github.event_name == 'workflow_dispatch'
+        && github.ref == 'refs/heads/dev')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      sha: ${{ steps.meta.outputs.sha }}
+      sha_short: ${{ steps.meta.outputs.sha_short }}
+      jar_name: ${{ steps.jar.outputs.name }}
+
+    steps:
+      - name: Checkout
+        # actions/checkout v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Ensure branch name for versioning
+        run: git checkout -B dev ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Resolve commit metadata
+        id: meta
+        run: |
+          SHA=${{ github.event.workflow_run.head_sha || github.sha }}
+          echo "sha=$SHA" >> "$GITHUB_OUTPUT"
+          echo "sha_short=${SHA:0:7}" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Java 11
+        # actions/setup-java v5
+        uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95
+        with:
+          distribution: temurin
+          java-version: "11"
+
+      - name: Setup Gradle
+        # gradle/actions/setup-gradle v5
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c
+
+      - name: Build jar (skip tests)
+        run: ./gradlew :nodel-jyhost:build -x test
+
+      - name: Locate jar
+        id: jar
+        run: |
+          JAR=$(ls nodel-jyhost/build/distributions/standalone/nodelhost-*.jar | head -n 1)
+          echo "name=$(basename "$JAR")" >> "$GITHUB_OUTPUT"
+          echo "path=$JAR" >> "$GITHUB_OUTPUT"
+
+      - name: Upload jar
+        # actions/upload-artifact v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: nodelhost-jar
+          path: ${{ steps.jar.outputs.path }}
+          retention-days: 1
+
+  release:
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download jar
+        # actions/download-artifact v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: nodelhost-jar
+
+      - name: Generate release notes
+        run: |
+          cat > release_notes.md <<'EOF'
+          This tip release is automatically built on every push to `dev` that passes tests.
+
+          > [!WARNING]
+          > **This is a development build, not a stable release.**
+          > You can find stable releases on the [releases page](__RELEASES_URL__).
+
+          ## Usage
+
+          - Requires **[Java 11](https://adoptium.net/temurin/releases/)** or later.
+          - `java -jar __JAR_NAME__`
+          - Then open http://localhost:8085
+          EOF
+          sed -i \
+            -e "s|__JAR_NAME__|$JAR_NAME|g" \
+            -e "s|__RELEASES_URL__|$RELEASES_URL|g" \
+            release_notes.md
+        env:
+          JAR_NAME: ${{ needs.build.outputs.jar_name }}
+          RELEASES_URL: https://github.com/${{ github.repository }}/releases
+
+      - name: Upload release
+        # softprops/action-gh-release v3
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228
+        with:
+          tag_name: tip
+          target_commitish: ${{ needs.build.outputs.sha }}
+          name: Nodel Tip ("Nightly")
+          prerelease: true
+          body_path: release_notes.md
+          files: ${{ needs.build.outputs.jar_name }}
+          fail_on_unmatched_files: true
+          overwrite_files: true
+          make_latest: false
+
+      - name: Delete old release assets
+        # actions/github-script v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        env:
+          CURRENT_ASSET_NAME: ${{ needs.build.outputs.jar_name }}
+        with:
+          script: |
+            const currentAssetName = process.env.CURRENT_ASSET_NAME;
+            const { data: release } = await github.rest.repos.getReleaseByTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag: 'tip',
+            });
+            for (const asset of release.assets) {
+              if (asset.name === currentAssetName) continue;
+              await github.rest.repos.deleteReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                asset_id: asset.id,
+              });
+            }
+
+  tag:
+    needs: [release, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+
+    steps:
+      - name: Move tip tag
+        # actions/github-script v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        with:
+          script: |
+            const sha = '${{ needs.build.outputs.sha }}';
+            const tagName = 'tip';
+            const ref = `tags/${tagName}`;
+
+            // Move the public tip tag only after the release upload has succeeded.
+            // API-created annotated tags may be signed by GitHub.
+            const { data: tagObject } = await github.rest.git.createTag({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag: tagName,
+              message: `tip: ${{ needs.build.outputs.sha_short }}`,
+              object: sha,
+              type: 'commit',
+            });
+
+            // Update or create the ref to point to the tag object
+            try {
+              await github.rest.git.updateRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: ref,
+                sha: tagObject.sha,
+                force: true,
+              });
+            } catch (e) {
+              if (e.status === 422) {
+                await github.rest.git.createRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: `refs/${ref}`,
+                  sha: tagObject.sha,
+                });
+              } else {
+                throw e;
+              }
+            }
