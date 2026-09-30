@@ -16,7 +16,8 @@ const DEFAULT_FIXTURES = [
   path.join(SRC_DIR, 'toolkit.xml'),
   path.join(SRC_DIR, 'diagnostics.xml'),
   path.join(SRC_DIR, 'status.xml'),
-  path.join(ROOT_DIR, 'scripts/fixtures/markup-parity.xml')
+  path.join(ROOT_DIR, 'scripts/fixtures/markup-parity.xml'),
+  path.join(ROOT_DIR, 'scripts/fixtures/empty-values.xml')
 ];
 
 const RAW_TEXT_TAGS = new Set(['script', 'style']);

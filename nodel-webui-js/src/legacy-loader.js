@@ -91,7 +91,7 @@
   }
 
   function appendAttribute(parts, name, value) {
-    if (value == null || value === '') {
+    if (value == null) {
       return;
     }
     parts.push(' ' + name + '="' + escapeAttribute(value) + '"');
@@ -220,7 +220,7 @@
     if (hasAttribute(node, 'event')) {
       appendAttribute(attrs, 'data-event', attr(node, 'event', ''));
     }
-    return attrs.join('') + '>' + escapeHtml(directText(node));
+    return attrs.join('') + '>' + escapeHtml(node.textContent);
   }
 
   function renderRow(node) {
@@ -300,7 +300,7 @@
     }
     parts.push('>');
     parts.push(iconHtml);
-    parts.push(escapeHtml(directText(node)));
+    parts.push(escapeHtml(node.textContent));
     parts.push('</p>');
     return parts.join('');
   }
@@ -1027,6 +1027,11 @@
       document.open();
       document.write(html);
       document.close();
+      // document.open() removes event listeners from the old document.
+      // Reinstall the wrapper router so navigation continues to avoid XSLT.
+      if (typeof window.NODEL_LEGACY_INSTALL_ROUTER === 'function') {
+        window.NODEL_LEGACY_INSTALL_ROUTER();
+      }
       debugLog('Rendered target:', targetPath, 'in', (Date.now() - startedAt) + 'ms', 'unknown tags:', Object.keys(unknownTags));
     });
   }
